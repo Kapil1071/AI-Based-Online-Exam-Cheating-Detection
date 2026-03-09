@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>{% block title %}AI Exam Proctoring System{% endblock %}</title>
+
+<link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+<body>
+
+
+<!-- Navigation Bar -->
+
+<nav class="navbar">
+
+<h2>AI Exam Proctoring</h2>
+
+<div class="nav-links">
+
+<a href="/exam">Exam</a>
+
+<a href="/admin/dashboard">Dashboard</a>
+
+<a href="/logout">Logout</a>
+
+</div>
+
+</nav>
+
+
+
+<!-- Page Content -->
+<div class="main-container">
+
+{% block content %}
+
+{% endblock %}
+
+</div>
+
+
+</body>
+</html>

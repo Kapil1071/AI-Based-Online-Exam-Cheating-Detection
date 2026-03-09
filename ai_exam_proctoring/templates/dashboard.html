@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+
+<link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+<body>
+
+<h1>Admin Monitoring Dashboard</h1>
+
+<p>Live monitoring of exam sessions and cheating events.</p>
+
+
+<hr>
+
+
+<h2>Exam Sessions</h2>
+
+<table border="1">
+
+<thead>
+<tr>
+<th>Session ID</th>
+<th>User ID</th>
+<th>Start Time</th>
+<th>End Time</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for session in sessions %}
+
+<tr>
+<td>{{ session.id }}</td>
+<td>{{ session.user_id }}</td>
+<td>{{ session.start_time }}</td>
+<td>{{ session.end_time }}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+
+<hr>
+
+
+<h2>Cheating Logs</h2>
+
+<table border="1">
+
+<thead>
+<tr>
+<th>Log ID</th>
+<th>Session ID</th>
+<th>Event Type</th>
+<th>Evidence</th>
+<th>Timestamp</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for log in logs %}
+
+<tr>
+
+<td>{{ log.id }}</td>
+
+<td>{{ log.session_id }}</td>
+
+<td>{{ log.event_type }}</td>
+
+<td>
+{% if log.image_path %}
+<img src="/{{ log.image_path }}" width="80">
+{% else %}
+No Image
+{% endif %}
+</td>
+
+<td>{{ log.timestamp }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+
+</body>
+</html>

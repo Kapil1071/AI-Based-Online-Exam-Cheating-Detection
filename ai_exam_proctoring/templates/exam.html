@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+
+<title>Online Exam</title>
+
+<link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+
+<body>
+
+<h1>Online Examination</h1>
+
+<p>Do not switch tabs or leave the exam window.</p>
+
+
+<!-- Hidden session id passed from Flask -->
+<input type="hidden" id="session_id" value="{{ session_id }}">
+
+
+<!-- Exam Area -->
+<div class="exam-container">
+
+<textarea id="answer_box" placeholder="Write your answer here..."></textarea>
+
+</div>
+
+
+<script>
+
+/*
+This script monitors suspicious activities during the exam.
+
+Events detected:
+1. Tab switching
+2. Window minimize / focus loss
+*/
+
+
+// Get session id from hidden input
+const sessionId = document.getElementById("session_id").value;
+
+
+
+/*
+Function to send cheating events to backend
+*/
+function logEvent(eventType){
+
+    fetch("/log_event", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            session_id: sessionId,
+            event_type: eventType
+        })
+
+    });
+
+}
+
+
+
+/*
+TAB SWITCH DETECTION
+This triggers when the student switches browser tabs.
+*/
+
+document.addEventListener("visibilitychange", function(){
+
+    if(document.hidden){
+
+        alert("Tab switching detected!");
+
+        logEvent("Tab Switch");
+
+    }
+
+});
+
+
+
+/*
+WINDOW BLUR DETECTION
+Triggers when the exam window loses focus.
+Examples:
+- minimizing browser
+- switching application
+*/
+
+window.onblur = function(){
+
+    logEvent("Window Focus Lost");
+
+};
+
+
+
+</script>
+
+
+</body>
+</html>
