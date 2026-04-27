@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="dashboard-header">
+      <div class="dashboard-title">
+        <div>
+          <h1>🗂 Staff Dashboard</h1>
+          <p>Welcome, <strong>{{ current_user.username }}</strong>. Manage your exams below.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="staff-layout">
+
+      <div class="staff-main">
+        <div class="section-label">My Exams</div>
+        {% if exams %}
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Duration</th>
+                <th>Max Warnings</th>
+                <th>Scheduled Start</th>
+                <th>Scheduled End</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for exam in exams %}
+              <tr>
+                <td class="cell-primary">{{ exam.title }}</td>
+                <td>{{ exam.duration_minutes }} min</td>
+                <td>{{ exam.max_warnings }}</td>
+                <td>{{ exam.scheduled_start.strftime('%d %b %Y, %H:%M') if exam.scheduled_start else '—' }}</td>
+                <td>{{ exam.scheduled_end.strftime('%d %b %Y, %H:%M') if exam.scheduled_end else '—' }}</td>
+                <td>
+                  <a href="/staff/exam/{{ exam.id }}/questions" class="btn btn-primary btn-sm">Questions</a>
+                  <a href="/staff/exam/{{ exam.id }}/edit" class="btn btn-ghost btn-sm">Edit</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>No exams yet. Create your first exam below.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="staff-sidebar">
+        <div class="section-label">Create New Exam</div>
+        <div class="staff-form-card">
+          <form method="POST" action="/staff/exam/create">
+            <div class="form-group">
+              <label class="form-label">Title *</label>
+              <input type="text" name="title" class="form-input" required placeholder="Exam title">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea name="description" class="form-input" rows="3" placeholder="Optional description"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration (minutes)</label>
+              <input type="number" name="duration_minutes" class="form-input" value="60" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Max Warnings</label>
+              <input type="number" name="max_warnings" class="form-input" value="3" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Scheduled Start</label>
+              <input type="datetime-local" name="scheduled_start" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Scheduled End</label>
+              <input type="datetime-local" name="scheduled_end" class="form-input">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Create Exam</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

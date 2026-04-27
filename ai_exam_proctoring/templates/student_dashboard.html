@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}My Exams — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="dashboard-header">
+      <div class="dashboard-title">
+        <div>
+          <h1>📚 My Exams</h1>
+          <p>Welcome back, <strong>{{ current_user.username }}</strong>. Here are your assigned exams.</p>
+        </div>
+      </div>
+    </div>
+
+    {% set upcoming = student_exams | selectattr('status', 'equalto', 'upcoming') | list %}
+    {% set active = student_exams | selectattr('status', 'equalto', 'active') | list %}
+    {% set finished = student_exams | selectattr('status', 'equalto', 'finished') | list %}
+    {% set absent = student_exams | selectattr('status', 'equalto', 'absent') | list %}
+
+    {% if active %}
+    <div class="section-label">🟢 Active Exams</div>
+    <div class="exam-cards-grid">
+      {% for se in active %}
+      <div class="exam-card exam-card-active">
+        <div class="exam-card-header">
+          <h3>{{ se.exam.title }}</h3>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="exam-card-body">
+          <p>{{ se.exam.description or 'No description.' }}</p>
+          <div class="exam-card-meta">
+            <span>⏱ {{ se.exam.duration_minutes }} min</span>
+            {% if se.exam.scheduled_end %}
+            <span>📅 Ends: {{ se.exam.scheduled_end.strftime('%d %b %Y, %H:%M') }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="exam-card-footer">
+          <a href="/exam/{{ se.exam_id }}" class="btn btn-primary btn-sm">Enter Exam →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if upcoming %}
+    <div class="section-label">🔵 Upcoming Exams</div>
+    <div class="exam-cards-grid">
+      {% for se in upcoming %}
+      <div class="exam-card exam-card-upcoming">
+        <div class="exam-card-header">
+          <h3>{{ se.exam.title }}</h3>
+          <span class="badge badge-neutral">Upcoming</span>
+        </div>
+        <div class="exam-card-body">
+          <p>{{ se.exam.description or 'No description.' }}</p>
+          <div class="exam-card-meta">
+            <span>⏱ {{ se.exam.duration_minutes }} min</span>
+            {% if se.exam.scheduled_start %}
+            <span>📅 Starts: {{ se.exam.scheduled_start.strftime('%d %b %Y, %H:%M') }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="exam-card-footer">
+          <a href="/exam/{{ se.exam_id }}" class="btn btn-primary btn-sm">Enter Exam →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if finished %}
+    <div class="section-label">✅ Finished Exams</div>
+    <div class="exam-cards-grid">
+      {% for se in finished %}
+      <div class="exam-card exam-card-finished">
+        <div class="exam-card-header">
+          <h3>{{ se.exam.title }}</h3>
+          <span class="badge badge-success">Finished</span>
+        </div>
+        <div class="exam-card-body">
+          <p>{{ se.exam.description or 'No description.' }}</p>
+          <div class="exam-card-meta">
+            <span>⏱ {{ se.exam.duration_minutes }} min</span>
+            {% if se.end_time %}
+            <span>📅 Completed: {{ se.end_time.strftime('%d %b %Y, %H:%M') }}</span>
+            {% endif %}
+          </div>
+          <div class="score-display">
+            <span class="score-label">Score:</span>
+            <span class="score-value">{{ se.score if se.score is not none else 'N/A' }}</span>
+          </div>
+        </div>
+        <div class="exam-card-footer">
+          <span class="btn btn-ghost btn-sm">✅ View Score: {{ se.score if se.score is not none else 'N/A' }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if absent %}
+    <div class="section-label">⚫ Absent</div>
+    <div class="exam-cards-grid">
+      {% for se in absent %}
+      <div class="exam-card exam-card-absent">
+        <div class="exam-card-header">
+          <h3>{{ se.exam.title }}</h3>
+          <span class="badge badge-danger">Absent</span>
+        </div>
+        <div class="exam-card-body">
+          <p>{{ se.exam.description or 'No description.' }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not student_exams %}
+    <div class="empty-state" style="margin-top:60px;">
+      <div class="empty-icon">📋</div>
+      <p>No exams assigned to you yet.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

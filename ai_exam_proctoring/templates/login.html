@@ -44,9 +44,15 @@
 
   <div class="auth-right">
     <div class="auth-form-box">
+
+      <div class="role-tabs">
+        <button class="role-tab active" id="tab-student" onclick="selectRole('student')">🎓 Student</button>
+        <button class="role-tab" id="tab-staff" onclick="selectRole('staff')">🗂 Staff / Admin</button>
+      </div>
+
       <div class="auth-form-header">
         <h1>Welcome back</h1>
-        <p>Enter your credentials to start your proctored exam session.</p>
+        <p id="role-desc">Enter your credentials to start your proctored exam session.</p>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -83,12 +89,28 @@
       <div class="demo-accounts">
         <p>Test Credentials</p>
         <div class="demo-row"><span>Admin</span><strong>admin / admin123</strong></div>
+        <div class="demo-row"><span>Staff</span><strong>staff / staff123</strong></div>
         <div class="demo-row"><span>Student</span><strong>student / student123</strong></div>
       </div>
     </div>
   </div>
 
 </div>
+
+<script>
+function selectRole(role) {
+  document.getElementById('tab-student').classList.remove('active');
+  document.getElementById('tab-staff').classList.remove('active');
+  const desc = document.getElementById('role-desc');
+  if (role === 'student') {
+    document.getElementById('tab-student').classList.add('active');
+    desc.textContent = 'Enter your credentials to start your proctored exam session.';
+  } else {
+    document.getElementById('tab-staff').classList.add('active');
+    desc.textContent = 'Sign in to access the staff or admin dashboard.';
+  }
+}
+</script>
 
 </body>
 </html>

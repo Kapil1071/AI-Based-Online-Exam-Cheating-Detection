@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Online Exam — ProctorAI{% endblock %}
+{% block title %}{{ exam.title }} — ProctorAI{% endblock %}
 
 {% block footer %}{% endblock %}
 
@@ -11,12 +11,12 @@
     <div class="exam-header-inner">
       <div class="exam-title">
         <div>
-          <h1>📝 Online Examination</h1>
+          <h1>📝 {{ exam.title }}</h1>
           <p>Do not switch tabs or leave the exam window</p>
         </div>
       </div>
       <div class="exam-meta">
-        <div class="exam-timer" id="exam-timer">⏱ 60:00</div>
+        <div class="exam-timer" id="exam-timer">⏱ {{ exam.duration_minutes }}:00</div>
         <div class="exam-session-badge">Session #{{ session_id }}</div>
       </div>
     </div>
@@ -24,33 +24,25 @@
 </div>
 
 <input type="hidden" id="session_id" value="{{ session_id }}">
+<input type="hidden" id="exam_id" value="{{ exam_id }}">
 
 <div class="container">
   <div class="exam-body">
 
     <div class="question-panel">
-      <div class="question-card">
+      <div class="question-card" id="question-card">
         <div class="question-meta">
-          <span class="question-num">Question 1 of 5</span>
-          <span class="question-points">10 points</span>
+          <span class="question-num" id="q-label">Question 1 of {{ questions|length }}</span>
+          <span class="question-points" id="q-points">10 points</span>
         </div>
-        <div class="question-text">
-          Explain the concept of Artificial Intelligence and how machine learning differs from traditional programming. Include at least two real-world applications.
-        </div>
-        <div class="answer-label">Your Answer</div>
-        <textarea id="answer_box" class="answer-textarea" placeholder="Write your answer here..."></textarea>
+        <div class="question-text" id="q-text">Loading...</div>
+        <div id="q-answer-area"></div>
       </div>
 
       <div class="question-nav">
-        <button class="btn btn-ghost btn-sm" disabled>← Previous</button>
-        <div style="display:flex;gap:8px;">
-          <span class="badge badge-success" style="font-size:.8rem;padding:6px 14px;">Q1</span>
-          <span class="badge badge-neutral" style="font-size:.8rem;padding:6px 14px;">Q2</span>
-          <span class="badge badge-neutral" style="font-size:.8rem;padding:6px 14px;">Q3</span>
-          <span class="badge badge-neutral" style="font-size:.8rem;padding:6px 14px;">Q4</span>
-          <span class="badge badge-neutral" style="font-size:.8rem;padding:6px 14px;">Q5</span>
-        </div>
-        <button class="btn btn-primary btn-sm">Next →</button>
+        <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="navigate(-1)" disabled>← Previous</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="q-badges"></div>
+        <button class="btn btn-primary btn-sm" id="btn-next" onclick="navigate(1)">Next →</button>
       </div>
     </div>
 
@@ -88,7 +80,7 @@
       <div class="warning-bar">
         <div class="title">
           <span>Tab Switch Warnings</span>
-          <span id="warn-count">0 / 3</span>
+          <span id="warn-count">0 / {{ max_warnings }}</span>
         </div>
         <div class="progress-track">
           <div class="progress-fill w-0" id="warn-bar"></div>
@@ -100,11 +92,107 @@
 </div>
 
 <script>
-const sessionId = document.getElementById("session_id")?.value || null
+const sessionId = document.getElementById("session_id").value
+const examId = parseInt(document.getElementById("exam_id").value)
+const questions = {{ questions | tojson }}
+const maxWarnings = {{ max_warnings }}
+let currentIndex = 0
+const answers = {}
 
+function renderQuestion(idx) {
+  const q = questions[idx]
+  document.getElementById("q-label").textContent = `Question ${idx + 1} of ${questions.length}`
+  document.getElementById("q-points").textContent = `${q.points} points`
+  document.getElementById("q-text").textContent = q.text
+
+  const area = document.getElementById("q-answer-area")
+  area.innerHTML = ""
+
+  if (q.type === "mcq") {
+    const saved = answers[q.id] || ""
+    q.options.forEach(opt => {
+      const label = document.createElement("label")
+      label.className = "mcq-option"
+      const radio = document.createElement("input")
+      radio.type = "radio"
+      radio.name = `q_${q.id}`
+      radio.value = opt
+      radio.checked = (saved === opt)
+      radio.onchange = () => { answers[q.id] = opt; updateBadges() }
+      label.appendChild(radio)
+      label.appendChild(document.createTextNode(" " + opt))
+      area.appendChild(label)
+    })
+  } else {
+    const lbl = document.createElement("div")
+    lbl.className = "answer-label"
+    lbl.textContent = "Your Answer"
+    area.appendChild(lbl)
+    const ta = document.createElement("textarea")
+    ta.className = "answer-textarea"
+    ta.placeholder = "Write your answer here..."
+    ta.value = answers[q.id] || ""
+    ta.oninput = () => { answers[q.id] = ta.value; updateBadges() }
+    area.appendChild(ta)
+  }
+
+  document.getElementById("btn-prev").disabled = (idx === 0)
+
+  const isLast = (idx === questions.length - 1)
+  const nextBtn = document.getElementById("btn-next")
+  if (isLast) {
+    nextBtn.textContent = "Submit Exam ✓"
+    nextBtn.onclick = submitExam
+    nextBtn.className = "btn btn-success btn-sm"
+  } else {
+    nextBtn.textContent = "Next →"
+    nextBtn.onclick = () => navigate(1)
+    nextBtn.className = "btn btn-primary btn-sm"
+  }
+
+  updateBadges()
+}
+
+function updateBadges() {
+  const container = document.getElementById("q-badges")
+  container.innerHTML = ""
+  questions.forEach((q, i) => {
+    const span = document.createElement("span")
+    const answered = answers[q.id] !== undefined && answers[q.id] !== ""
+    span.className = "badge " + (i === currentIndex ? "badge-primary" : (answered ? "badge-success" : "badge-neutral"))
+    span.style = "font-size:.8rem;padding:6px 14px;cursor:pointer;"
+    span.textContent = `Q${i + 1}`
+    span.onclick = () => { currentIndex = i; renderQuestion(i) }
+    container.appendChild(span)
+  })
+}
+
+function navigate(dir) {
+  currentIndex = Math.max(0, Math.min(questions.length - 1, currentIndex + dir))
+  renderQuestion(currentIndex)
+}
+
+function submitExam() {
+  if (!confirm("Are you sure you want to submit the exam?")) return
+  fetch(`/exam/${examId}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ answers: answers })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      alert(`Exam submitted! Your MCQ score: ${data.score}`)
+      window.location.href = "/student/dashboard"
+    } else {
+      alert("Submission failed. Please try again.")
+    }
+  })
+  .catch(err => { console.error(err); alert("Error submitting exam.") })
+}
+
+// Warning bar
 let warnCount = 0
-const maxWarnings = 3
-
 function showWarning(message) {
   const box = document.createElement("div")
   box.className = "toast"
@@ -112,28 +200,26 @@ function showWarning(message) {
   document.body.appendChild(box)
   setTimeout(() => box.remove(), 4000)
 }
-
 function updateStatus(text, type) {
   const el = document.getElementById("status")
   el.textContent = text
   el.className = "badge"
-  if (type === "danger")  el.classList.add("badge-danger")
+  if (type === "danger") el.classList.add("badge-danger")
   else if (type === "warning") el.classList.add("badge-warning")
   else el.classList.add("badge-success")
 }
-
 function updateWarnBar(count) {
   warnCount = count
   const bar = document.getElementById("warn-bar")
   const label = document.getElementById("warn-count")
   label.textContent = count + " / " + maxWarnings
   bar.className = "progress-fill"
-  if (count === 0) bar.classList.add("w-0")
-  else if (count === 1) bar.classList.add("w-33")
-  else if (count === 2) bar.classList.add("w-66")
+  const pct = Math.min(count / maxWarnings, 1)
+  if (pct === 0) bar.classList.add("w-0")
+  else if (pct <= 0.33) bar.classList.add("w-33")
+  else if (pct <= 0.66) bar.classList.add("w-66")
   else bar.classList.add("w-100")
 }
-
 function logEvent(eventType) {
   if (!sessionId) return
   fetch("/log_event", {
@@ -156,12 +242,13 @@ function logEvent(eventType) {
   .catch(err => console.error(err))
 }
 
-let totalSeconds = 60 * 60
+// Timer
+let totalSeconds = {{ exam.duration_minutes }} * 60
 const timerEl = document.getElementById("exam-timer")
-
 function tick() {
   if (totalSeconds <= 0) {
     timerEl.textContent = "⏱ 00:00"
+    submitExam()
     return
   }
   totalSeconds--
@@ -171,19 +258,17 @@ function tick() {
   if (totalSeconds <= 300) timerEl.className = "exam-timer warning"
   if (totalSeconds <= 60)  timerEl.className = "exam-timer danger"
 }
-
 setInterval(tick, 1000)
 
 document.addEventListener("visibilitychange", function () {
   if (document.hidden) logEvent("Tab Switch")
 })
-
 window.addEventListener("blur", function () {
   logEvent("Window Focus Lost")
 })
-
 window.onload = function () {
   updateStatus("Online", "success")
+  renderQuestion(0)
 }
 </script>
 

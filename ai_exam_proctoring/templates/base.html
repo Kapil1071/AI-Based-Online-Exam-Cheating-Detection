@@ -22,8 +22,11 @@
       {% if current_user.is_authenticated %}
         {% if current_user.role == 'admin' %}
           <a href="/admin/dashboard" class="{% if request.path == '/admin/dashboard' %}active{% endif %}">📊 Dashboard</a>
+        {% elif current_user.role == 'staff' %}
+          <a href="/staff/dashboard" class="{% if request.path == '/staff/dashboard' %}active{% endif %}">🗂 Staff Dashboard</a>
+        {% elif current_user.role == 'student' %}
+          <a href="/student/dashboard" class="{% if request.path == '/student/dashboard' %}active{% endif %}">📚 My Exams</a>
         {% endif %}
-        <a href="/exam" class="{% if request.path == '/exam' %}active{% endif %}">📝 Exam</a>
         <div class="nav-user">
           <div class="avatar">{{ current_user.username[0].upper() }}</div>
           <span>{{ current_user.username }}</span>

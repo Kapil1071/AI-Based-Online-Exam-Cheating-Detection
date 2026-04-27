@@ -10,9 +10,8 @@
       <div class="dashboard-title">
         <div>
           <h1>Admin Dashboard</h1>
-          <p>Live overview of exam sessions and cheating events.</p>
+          <p>Live overview of exam sessions, cheating events, and exam management.</p>
         </div>
-        <a href="/exam" class="btn btn-primary">+ New Session</a>
       </div>
     </div>
 
@@ -47,109 +46,194 @@
       </div>
     </div>
 
-    <div class="section-label">Exam Sessions</div>
-    <div class="table-wrapper" style="margin-bottom:32px;">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Session ID</th>
-            <th>User ID</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for session in sessions %}
-          <tr>
-            <td class="cell-primary">{{ loop.index }}</td>
-            <td><span class="badge badge-neutral">#{{ session.id }}</span></td>
-            <td>{{ session.user_id }}</td>
-            <td>{{ session.start_time.strftime('%d %b %Y, %H:%M') if session.start_time else '—' }}</td>
-            <td>{{ session.end_time.strftime('%d %b %Y, %H:%M') if session.end_time else '—' }}</td>
-            <td>
-              {% if session.end_time %}
-                <span class="badge badge-neutral">Completed</span>
-              {% else %}
-                <span class="badge badge-success">Active</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="6">
-              <div class="empty-state">
-                <div class="empty-icon">📋</div>
-                <p>No exam sessions yet.</p>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <!-- Tab Navigation -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="showTab('sessions')">📋 Sessions & Logs</button>
+      <button class="admin-tab" onclick="showTab('exams')">📝 Exams Management</button>
+      <button class="admin-tab" onclick="showTab('questions')">❓ Questions & Scoring</button>
     </div>
 
-    <div class="section-label">Cheating Event Log</div>
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Event Type</th>
-            <th>Session</th>
-            <th>Evidence</th>
-            <th>Timestamp</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for log in logs %}
-          <tr>
-            <td class="cell-primary">{{ loop.index }}</td>
-            <td>
-              {% set et = log.event_type | lower %}
-              {% if 'tab switch' in et %}
-                <span class="badge event-type-tab-switch">{{ log.event_type }}</span>
-              {% elif 'focus' in et %}
-                <span class="badge event-type-focus-lost">{{ log.event_type }}</span>
-              {% elif 'no face' in et %}
-                <span class="badge event-type-no-face">{{ log.event_type }}</span>
-              {% elif 'multiple' in et %}
-                <span class="badge event-type-multi-face">{{ log.event_type }}</span>
-              {% elif 'terminated' in et %}
-                <span class="badge event-type-terminated">{{ log.event_type }}</span>
-              {% elif 'looking' in et %}
-                <span class="badge event-type-looking-away">{{ log.event_type }}</span>
-              {% elif 'object' in et or 'phone' in et %}
-                <span class="badge event-type-object">{{ log.event_type }}</span>
-              {% else %}
-                <span class="badge badge-neutral">{{ log.event_type }}</span>
-              {% endif %}
-            </td>
-            <td><span class="badge badge-neutral">#{{ log.session_id }}</span></td>
-            <td>
-              {% if log.image_path %}
-                <img src="/{{ log.image_path }}" alt="Evidence">
-              {% else %}
-                <span style="color:var(--text-muted);font-size:.8rem;">No image</span>
-              {% endif %}
-            </td>
-            <td>{{ log.timestamp.strftime('%d %b %Y, %H:%M:%S') if log.timestamp else '—' }}</td>
-          </tr>
+    <!-- Tab: Sessions & Logs -->
+    <div id="tab-sessions" class="admin-tab-content">
+      <div class="section-label">Exam Sessions</div>
+      <div class="table-wrapper" style="margin-bottom:32px;">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Session ID</th><th>User ID</th><th>Start Time</th><th>End Time</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for session in sessions %}
+            <tr>
+              <td class="cell-primary">{{ loop.index }}</td>
+              <td><span class="badge badge-neutral">#{{ session.id }}</span></td>
+              <td>{{ session.user_id }}</td>
+              <td>{{ session.start_time.strftime('%d %b %Y, %H:%M') if session.start_time else '—' }}</td>
+              <td>{{ session.end_time.strftime('%d %b %Y, %H:%M') if session.end_time else '—' }}</td>
+              <td>
+                {% if session.end_time %}<span class="badge badge-neutral">Completed</span>
+                {% else %}<span class="badge badge-success">Active</span>{% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><p>No sessions yet.</p></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-label">Cheating Event Log</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Event Type</th><th>Session</th><th>Evidence</th><th>Timestamp</th></tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+            <tr>
+              <td class="cell-primary">{{ loop.index }}</td>
+              <td>
+                {% set et = log.event_type | lower %}
+                {% if 'tab switch' in et %}<span class="badge event-type-tab-switch">{{ log.event_type }}</span>
+                {% elif 'focus' in et %}<span class="badge event-type-focus-lost">{{ log.event_type }}</span>
+                {% elif 'no face' in et %}<span class="badge event-type-no-face">{{ log.event_type }}</span>
+                {% elif 'multiple' in et %}<span class="badge event-type-multi-face">{{ log.event_type }}</span>
+                {% elif 'terminated' in et %}<span class="badge event-type-terminated">{{ log.event_type }}</span>
+                {% elif 'looking' in et %}<span class="badge event-type-looking-away">{{ log.event_type }}</span>
+                {% elif 'object' in et or 'phone' in et %}<span class="badge event-type-object">{{ log.event_type }}</span>
+                {% else %}<span class="badge badge-neutral">{{ log.event_type }}</span>{% endif %}
+              </td>
+              <td><span class="badge badge-neutral">#{{ log.session_id }}</span></td>
+              <td>
+                {% if log.image_path %}<img src="/{{ log.image_path }}" alt="Evidence">
+                {% else %}<span style="color:var(--text-muted);font-size:.8rem;">No image</span>{% endif %}
+              </td>
+              <td>{{ log.timestamp.strftime('%d %b %Y, %H:%M:%S') if log.timestamp else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><p>No cheating events recorded.</p></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Exams Management -->
+    <div id="tab-exams" class="admin-tab-content" style="display:none;">
+
+      <div class="staff-layout">
+        <div class="staff-main">
+          <div class="section-label">All Exams</div>
+          {% if exams %}
+          <div class="table-wrapper" style="margin-bottom:24px;">
+            <table>
+              <thead>
+                <tr><th>Title</th><th>Duration</th><th>Max Warn</th><th>Scheduled Start</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                {% for exam in exams %}
+                <tr>
+                  <td class="cell-primary">{{ exam.title }}</td>
+                  <td>{{ exam.duration_minutes }} min</td>
+                  <td>{{ exam.max_warnings }}</td>
+                  <td>{{ exam.scheduled_start.strftime('%d %b %Y, %H:%M') if exam.scheduled_start else '—' }}</td>
+                  <td>
+                    <form method="POST" action="/admin/exam/{{ exam.id }}/settings" style="display:inline-flex;gap:6px;align-items:center;">
+                      <input type="number" name="max_warnings" value="{{ exam.max_warnings }}" style="width:60px;" class="form-input" min="1">
+                      <input type="number" name="duration_minutes" value="{{ exam.duration_minutes }}" style="width:70px;" class="form-input" min="1">
+                      <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    </form>
+                    <form method="POST" action="/admin/exam/{{ exam.id }}/assign_students" style="display:inline;">
+                      <button type="submit" class="btn btn-ghost btn-sm">Assign All Students</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
           {% else %}
-          <tr>
-            <td colspan="5">
-              <div class="empty-state">
-                <div class="empty-icon">✅</div>
-                <p>No cheating events recorded.</p>
+          <div class="empty-state"><div class="empty-icon">📋</div><p>No exams yet.</p></div>
+          {% endif %}
+        </div>
+
+        <div class="staff-sidebar">
+          <div class="section-label">Schedule New Exam</div>
+          <div class="staff-form-card">
+            <form method="POST" action="/admin/exam/schedule">
+              <div class="form-group">
+                <label class="form-label">Title *</label>
+                <input type="text" name="title" class="form-input" required placeholder="Exam title">
               </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              <div class="form-group">
+                <label class="form-label">Duration (minutes)</label>
+                <input type="number" name="duration_minutes" class="form-input" value="60" min="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Warnings</label>
+                <input type="number" name="max_warnings" class="form-input" value="3" min="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Scheduled Start</label>
+                <input type="datetime-local" name="scheduled_start" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Scheduled End</label>
+                <input type="datetime-local" name="scheduled_end" class="form-input">
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">Schedule &amp; Assign All Students</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Questions & Scoring -->
+    <div id="tab-questions" class="admin-tab-content" style="display:none;">
+      <div class="section-label">Questions per Exam</div>
+      {% for exam in exams %}
+      <div style="margin-bottom:24px;">
+        <h3 style="margin-bottom:12px;font-size:1rem;color:var(--text-secondary);">{{ exam.title }}</h3>
+        {% if exam.questions %}
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Question</th><th>Type</th><th>Points</th><th>Update Points</th></tr>
+            </thead>
+            <tbody>
+              {% for q in exam.questions %}
+              <tr>
+                <td>{{ q.text[:60] }}{% if q.text|length > 60 %}...{% endif %}</td>
+                <td><span class="badge badge-neutral">{{ q.question_type }}</span></td>
+                <td>{{ q.points }}</td>
+                <td>
+                  <form method="POST" action="/admin/question/{{ q.id }}/points" style="display:inline-flex;gap:6px;align-items:center;">
+                    <input type="number" name="points" value="{{ q.points }}" style="width:70px;" class="form-input" min="0">
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="color:var(--text-muted);font-size:.9rem;">No questions for this exam.</p>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">❓</div><p>No exams found.</p></div>
+      {% endfor %}
     </div>
 
   </div>
 </div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = '';
+  event.target.classList.add('active');
+}
+</script>
 {% endblock %}
