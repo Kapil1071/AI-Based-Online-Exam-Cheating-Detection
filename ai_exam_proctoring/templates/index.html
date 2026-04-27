@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}ProctorAI — AI-Powered Exam Proctoring{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          AI-Powered Proctoring System
+        </div>
+        <h1 class="hero-title">
+          Smarter Exams.<br>
+          <span class="highlight">Zero Cheating.</span>
+        </h1>
+        <p class="hero-subtitle">
+          ProctorAI uses real-time facial detection, eye tracking, head pose estimation,
+          and behaviour analysis to keep your online exams fair and trustworthy.
+        </p>
+        <div class="hero-actions">
+          <a href="/login" class="btn btn-white btn-lg">Start Exam →</a>
+          <a href="#features" class="btn btn-lg" style="color:rgba(255,255,255,.85);border:2px solid rgba(255,255,255,.3);">See Features</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="value">99%</div>
+            <div class="label">Detection Rate</div>
+          </div>
+          <div class="hero-stat">
+            <div class="value">30fps</div>
+            <div class="label">Live Monitoring</div>
+          </div>
+          <div class="hero-stat">
+            <div class="value">4 AI</div>
+            <div class="label">Detection Layers</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="monitor-mockup">
+          <div class="mockup-header">
+            <span class="mockup-dot red"></span>
+            <span class="mockup-dot yellow"></span>
+            <span class="mockup-dot green"></span>
+            <span class="mockup-title">Live Proctoring Feed</span>
+          </div>
+          <div class="mockup-video">
+            <div class="cam-placeholder">
+              <div class="cam-icon">📷</div>
+              <div style="font-size:.85rem;">Camera Active</div>
+            </div>
+          </div>
+          <div class="cam-status">
+            <div class="cam-status-text">
+              <span class="live-dot"></span>
+              LIVE
+            </div>
+            <div class="cam-badges">
+              <span class="cam-badge ok">Face ✓</span>
+              <span class="cam-badge ok">Eyes ✓</span>
+              <span class="cam-badge warn">Head !</span>
+            </div>
+          </div>
+          <div class="mockup-alerts">
+            <div class="alert-row safe">
+              <span class="icon">✅</span>
+              Single face detected — Normal behaviour
+            </div>
+            <div class="alert-row warning">
+              <span class="icon">⚠️</span>
+              Head turned slightly — Warning issued
+            </div>
+            <div class="alert-row danger">
+              <span class="icon">🚨</span>
+              Tab switch detected — Event logged
+            </div>
+          </div>
+        </div>
+
+        <div class="floating-card top-right">
+          <div class="fc-label">Integrity Score</div>
+          <div class="fc-value green">94%</div>
+        </div>
+        <div class="floating-card bottom-left">
+          <div class="fc-label">Alerts Today</div>
+          <div class="fc-value red">3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Features</div>
+      <h2 class="section-title">Everything You Need to Prevent Cheating</h2>
+      <p class="section-sub">Six layers of AI-driven detection working simultaneously to ensure every exam is conducted with complete integrity.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon icon-blue">👤</div>
+        <h3>Face Detection</h3>
+        <p>Detects if a student is present, absent, or if multiple people are in frame — all in real time using Haar Cascade models.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-purple">👁️</div>
+        <h3>Eye Tracking</h3>
+        <p>MediaPipe Face Mesh tracks gaze direction. Looking left, right, or away from the screen triggers an immediate alert.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-green">🧭</div>
+        <h3>Head Pose Estimation</h3>
+        <p>3D head orientation is computed every frame. Suspicious head turns away from the camera are flagged automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-orange">📱</div>
+        <h3>Object Detection</h3>
+        <p>YOLOv8 scans the scene for prohibited items such as mobile phones, books, and secondary devices.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-cyan">🖥️</div>
+        <h3>Tab Switch Detection</h3>
+        <p>Browser visibility and focus events are monitored. Repeated tab switches escalate warnings and can terminate the session.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-red">📊</div>
+        <h3>Admin Dashboard</h3>
+        <p>Administrators get a live overview of all sessions, cheating logs with timestamps, and evidence snapshots for review.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="number">4</div>
+        <div class="stat-label">AI Detection Layers</div>
+      </div>
+      <div class="stat-item">
+        <div class="number">30fps</div>
+        <div class="stat-label">Real-Time Analysis</div>
+      </div>
+      <div class="stat-item">
+        <div class="number">100%</div>
+        <div class="stat-label">Session Coverage</div>
+      </div>
+      <div class="stat-item">
+        <div class="number">&lt;1s</div>
+        <div class="stat-label">Alert Response Time</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section how-section" id="how-it-works">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">How It Works</div>
+      <h2 class="section-title">Up and Running in Seconds</h2>
+      <p class="section-sub">A seamless four-step process from login to fully proctored exam session.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3>Sign In</h3>
+        <p>Students authenticate with their credentials. Admins get direct access to the monitoring dashboard.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3>Camera Activated</h3>
+        <p>The webcam feed starts automatically. AI models begin analysing facial presence and behaviour.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3>Live Monitoring</h3>
+        <p>Face, eyes, head pose, and objects are checked every frame. Any suspicious activity is logged instantly.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">4</div>
+        <h3>Report Generated</h3>
+        <p>All events are stored with timestamps. Admins can review the full cheating log after the exam.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="container">
+    <h2>Ready to Secure Your Next Exam?</h2>
+    <p>Join educators using ProctorAI to run fair, trustworthy online assessments powered by real AI.</p>
+    <div class="cta-actions">
+      <a href="/login" class="btn btn-white btn-lg">Get Started Free</a>
+      <a href="#features" class="btn btn-lg" style="color:white;border:2px solid rgba(255,255,255,.4);">Learn More</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>🛡️ ProctorAI</h3>
+        <p>AI-powered exam proctoring that ensures academic integrity using real-time facial detection, eye tracking, and behavioural analysis.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="/login">Student Login</a></li>
+          <li><a href="/admin/dashboard">Admin Panel</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Technology</h4>
+        <ul>
+          <li><a href="#">Face Detection</a></li>
+          <li><a href="#">Eye Tracking</a></li>
+          <li><a href="#">Head Pose Analysis</a></li>
+          <li><a href="#">Object Detection</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2025 ProctorAI. Built with Flask &amp; MediaPipe AI.
+    </div>
+  </div>
+</footer>
+
+{% endblock %}

@@ -1,165 +1,190 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-<meta charset="UTF-8">
-<title>Online Exam</title>
+{% block title %}Online Exam — ProctorAI{% endblock %}
 
-<link rel="stylesheet" href="/static/css/style.css">
+{% block footer %}{% endblock %}
 
-</head>
+{% block content %}
 
-<body>
-
-<div class="main-container">
-
-    <header>
-        <h1>Online Examination</h1>
-        <p>Do not switch tabs or leave the exam window.</p>
-    </header>
-
-    <input type="hidden" id="session_id" value="{{ session_id }}">
-
-    <div class="layout">
-
-        <!-- LEFT PANEL -->
-        <div class="exam-panel">
-
-            <h2>Answer Area</h2>
-
-            <textarea id="answer_box" placeholder="Write your answer here..."></textarea>
-
+<div class="exam-header">
+  <div class="container">
+    <div class="exam-header-inner">
+      <div class="exam-title">
+        <div>
+          <h1>📝 Online Examination</h1>
+          <p>Do not switch tabs or leave the exam window</p>
         </div>
-
-
-        <!-- RIGHT PANEL -->
-        <div class="monitor-panel">
-
-            <h2>Live Monitoring</h2>
-
-           <img src="/video_feed?session_id={{ session_id }}" class="video-feed">
-
-            <p id="status">Status: Monitoring</p>
-
-        </div>
-
+      </div>
+      <div class="exam-meta">
+        <div class="exam-timer" id="exam-timer">⏱ 60:00</div>
+        <div class="exam-session-badge">Session #{{ session_id }}</div>
+      </div>
     </div>
-
+  </div>
 </div>
 
+<input type="hidden" id="session_id" value="{{ session_id }}">
 
-<!-- ===============================
-     JAVASCRIPT
-================================ -->
+<div class="container">
+  <div class="exam-body">
+
+    <div class="question-panel">
+      <div class="question-card">
+        <div class="question-meta">
+          <span class="question-num">Question 1 of 5</span>
+          <span class="question-points">10 points</span>
+        </div>
+        <div class="question-text">
+          Explain the concept of Artificial Intelligence and how machine learning differs from traditional programming. Include at least two real-world applications.
+        </div>
+        <div class="answer-label">Your Answer</div>
+        <textarea id="answer_box" class="answer-textarea" placeholder="Write your answer here..."></textarea>
+      </div>
+
+      <div class="question-nav">
+        <button class="btn btn-ghost btn-sm" disabled>← Previous</button>
+        <div style="display:flex;gap:8px;">
+          <span class="badge badge-success" style="font-size:.8rem;padding:6px 14px;">Q1</span>
+          <span class="badge badge-neutral" style="font-size:.8rem;padding:6px 14px;">Q2</span>
+          <span class="badge badge-neutral" style="font-size:.8rem;padding:6px 14px;">Q3</span>
+          <span class="badge badge-neutral" style="font-size:.8rem;padding:6px 14px;">Q4</span>
+          <span class="badge badge-neutral" style="font-size:.8rem;padding:6px 14px;">Q5</span>
+        </div>
+        <button class="btn btn-primary btn-sm">Next →</button>
+      </div>
+    </div>
+
+    <div class="monitor-sidebar">
+      <div class="camera-card">
+        <div class="camera-card-header">
+          <span class="title">📷 Live Monitor</span>
+          <span class="badge badge-success" id="cam-status-badge">LIVE</span>
+        </div>
+        <div class="camera-card-body">
+          <img src="/video_feed?session_id={{ session_id }}" class="video-feed" alt="Live feed">
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-title">Monitoring Status</div>
+        <div class="status-item">
+          <span class="key">🤖 AI Detection</span>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="status-item">
+          <span class="key">👁 Eye Tracking</span>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="status-item">
+          <span class="key">🖥 Tab Monitor</span>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="status-item">
+          <span class="key">📡 Connection</span>
+          <span class="badge badge-success" id="status">Online</span>
+        </div>
+      </div>
+
+      <div class="warning-bar">
+        <div class="title">
+          <span>Tab Switch Warnings</span>
+          <span id="warn-count">0 / 3</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill w-0" id="warn-bar"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
+const sessionId = document.getElementById("session_id")?.value || null
 
-// Get session id safely
-const sessionInput = document.getElementById("session_id")
-const sessionId = sessionInput ? sessionInput.value : null
+let warnCount = 0
+const maxWarnings = 3
 
-
-/* ===============================
-   SHOW WARNING (TOAST)
-================================ */
-function showWarning(message){
-
-    const box = document.createElement("div")
-    box.className = "toast"
-    box.innerText = message
-
-    document.body.appendChild(box)
-
-    setTimeout(() => box.remove(), 3000)
+function showWarning(message) {
+  const box = document.createElement("div")
+  box.className = "toast"
+  box.innerHTML = "🚨 " + message
+  document.body.appendChild(box)
+  setTimeout(() => box.remove(), 4000)
 }
 
-
-/* ===============================
-   UPDATE STATUS TEXT
-================================ */
-function updateStatus(text, color="green"){
-    const status = document.getElementById("status")
-    status.innerText = "Status: " + text
-    status.style.color = color
+function updateStatus(text, type) {
+  const el = document.getElementById("status")
+  el.textContent = text
+  el.className = "badge"
+  if (type === "danger")  el.classList.add("badge-danger")
+  else if (type === "warning") el.classList.add("badge-warning")
+  else el.classList.add("badge-success")
 }
 
-
-/* ===============================
-   SEND EVENT TO BACKEND
-================================ */
-function logEvent(eventType){
-
-    if(!sessionId) return
-
-    fetch("/log_event", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            session_id: sessionId,
-            event_type: eventType
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        console.log("Server:", data)
-
-        // Show warning
-        if(data.message){
-            showWarning(data.message)
-        }
-
-        // Update status UI
-        if(data.warnings){
-            updateStatus(`Warnings: ${data.warnings}`, "orange")
-        }
-
-        // 🚨 TERMINATION HANDLING (UPDATED)
-        if(data.terminated){
-
-            updateStatus("Exam Terminated", "red")
-
-            showWarning("Exam terminated due to cheating")
-
-            setTimeout(() => {
-                window.location.href = "/logout"
-            }, 2000)
-        }
-
-    })
-    .catch(err => console.error("Error:", err))
+function updateWarnBar(count) {
+  warnCount = count
+  const bar = document.getElementById("warn-bar")
+  const label = document.getElementById("warn-count")
+  label.textContent = count + " / " + maxWarnings
+  bar.className = "progress-fill"
+  if (count === 0) bar.classList.add("w-0")
+  else if (count === 1) bar.classList.add("w-33")
+  else if (count === 2) bar.classList.add("w-66")
+  else bar.classList.add("w-100")
 }
 
-
-/* ===============================
-   TAB SWITCH DETECTION
-================================ */
-document.addEventListener("visibilitychange", function(){
-
-    if(document.hidden){
-        logEvent("Tab Switch")
+function logEvent(eventType) {
+  if (!sessionId) return
+  fetch("/log_event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, event_type: eventType })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.warnings !== undefined) updateWarnBar(data.warnings)
+    if (data.message) showWarning(data.message)
+    if (data.terminated) {
+      updateStatus("Terminated", "danger")
+      showWarning("Exam terminated due to cheating")
+      setTimeout(() => { window.location.href = "/logout" }, 2500)
+    } else if (data.warnings > 0) {
+      updateStatus("Warning " + data.warnings, "warning")
     }
-
-});
-
-
-/* ===============================
-   WINDOW BLUR DETECTION
-================================ */
-window.addEventListener("blur", function(){
-    logEvent("Window Focus Lost")
-});
-
-
-/* ===============================
-   PAGE LOAD INIT
-================================ */
-window.onload = function(){
-    updateStatus("Monitoring Active", "green")
+  })
+  .catch(err => console.error(err))
 }
 
+let totalSeconds = 60 * 60
+const timerEl = document.getElementById("exam-timer")
+
+function tick() {
+  if (totalSeconds <= 0) {
+    timerEl.textContent = "⏱ 00:00"
+    return
+  }
+  totalSeconds--
+  const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0")
+  const s = (totalSeconds % 60).toString().padStart(2, "0")
+  timerEl.textContent = "⏱ " + m + ":" + s
+  if (totalSeconds <= 300) timerEl.className = "exam-timer warning"
+  if (totalSeconds <= 60)  timerEl.className = "exam-timer danger"
+}
+
+setInterval(tick, 1000)
+
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) logEvent("Tab Switch")
+})
+
+window.addEventListener("blur", function () {
+  logEvent("Window Focus Lost")
+})
+
+window.onload = function () {
+  updateStatus("Online", "success")
+}
 </script>
 
-</body>
-</html>
+{% endblock %}

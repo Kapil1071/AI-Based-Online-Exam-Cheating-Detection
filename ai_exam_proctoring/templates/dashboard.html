@@ -1,103 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
+{% block title %}Admin Dashboard — ProctorAI{% endblock %}
 
-<meta charset="UTF-8">
-<title>Admin Dashboard</title>
+{% block content %}
+<div class="page-wrapper">
+  <div class="container">
 
-<link rel="stylesheet" href="/static/css/style.css">
+    <div class="dashboard-header">
+      <div class="dashboard-title">
+        <div>
+          <h1>Admin Dashboard</h1>
+          <p>Live overview of exam sessions and cheating events.</p>
+        </div>
+        <a href="/exam" class="btn btn-primary">+ New Session</a>
+      </div>
+    </div>
 
-</head>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon icon-blue">📋</div>
+        <div class="stat-info">
+          <div class="value">{{ sessions | length }}</div>
+          <div class="label">Total Sessions</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-red">🚨</div>
+        <div class="stat-info">
+          <div class="value">{{ logs | length }}</div>
+          <div class="label">Total Events</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-orange">⚠️</div>
+        <div class="stat-info">
+          <div class="value">{{ logs | selectattr('event_type', 'equalto', 'Tab Switch') | list | length }}</div>
+          <div class="label">Tab Switches</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-purple">👥</div>
+        <div class="stat-info">
+          <div class="value">{{ users | length }}</div>
+          <div class="label">Registered Users</div>
+        </div>
+      </div>
+    </div>
 
-<body>
+    <div class="section-label">Exam Sessions</div>
+    <div class="table-wrapper" style="margin-bottom:32px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Session ID</th>
+            <th>User ID</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for session in sessions %}
+          <tr>
+            <td class="cell-primary">{{ loop.index }}</td>
+            <td><span class="badge badge-neutral">#{{ session.id }}</span></td>
+            <td>{{ session.user_id }}</td>
+            <td>{{ session.start_time.strftime('%d %b %Y, %H:%M') if session.start_time else '—' }}</td>
+            <td>{{ session.end_time.strftime('%d %b %Y, %H:%M') if session.end_time else '—' }}</td>
+            <td>
+              {% if session.end_time %}
+                <span class="badge badge-neutral">Completed</span>
+              {% else %}
+                <span class="badge badge-success">Active</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <p>No exam sessions yet.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-<h1>Admin Monitoring Dashboard</h1>
+    <div class="section-label">Cheating Event Log</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Event Type</th>
+            <th>Session</th>
+            <th>Evidence</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td class="cell-primary">{{ loop.index }}</td>
+            <td>
+              {% set et = log.event_type | lower %}
+              {% if 'tab switch' in et %}
+                <span class="badge event-type-tab-switch">{{ log.event_type }}</span>
+              {% elif 'focus' in et %}
+                <span class="badge event-type-focus-lost">{{ log.event_type }}</span>
+              {% elif 'no face' in et %}
+                <span class="badge event-type-no-face">{{ log.event_type }}</span>
+              {% elif 'multiple' in et %}
+                <span class="badge event-type-multi-face">{{ log.event_type }}</span>
+              {% elif 'terminated' in et %}
+                <span class="badge event-type-terminated">{{ log.event_type }}</span>
+              {% elif 'looking' in et %}
+                <span class="badge event-type-looking-away">{{ log.event_type }}</span>
+              {% elif 'object' in et or 'phone' in et %}
+                <span class="badge event-type-object">{{ log.event_type }}</span>
+              {% else %}
+                <span class="badge badge-neutral">{{ log.event_type }}</span>
+              {% endif %}
+            </td>
+            <td><span class="badge badge-neutral">#{{ log.session_id }}</span></td>
+            <td>
+              {% if log.image_path %}
+                <img src="/{{ log.image_path }}" alt="Evidence">
+              {% else %}
+                <span style="color:var(--text-muted);font-size:.8rem;">No image</span>
+              {% endif %}
+            </td>
+            <td>{{ log.timestamp.strftime('%d %b %Y, %H:%M:%S') if log.timestamp else '—' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <div class="empty-icon">✅</div>
+                <p>No cheating events recorded.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-<p>Live monitoring of exam sessions and cheating events.</p>
-
-
-<hr>
-
-
-<h2>Exam Sessions</h2>
-
-<table border="1">
-
-<thead>
-<tr>
-<th>Session ID</th>
-<th>User ID</th>
-<th>Start Time</th>
-<th>End Time</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for session in sessions %}
-
-<tr>
-<td>{{ session.id }}</td>
-<td>{{ session.user_id }}</td>
-<td>{{ session.start_time }}</td>
-<td>{{ session.end_time }}</td>
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-
-<hr>
-
-
-<h2>Cheating Logs</h2>
-
-<table border="1">
-
-<thead>
-<tr>
-<th>Log ID</th>
-<th>Session ID</th>
-<th>Event Type</th>
-<th>Evidence</th>
-<th>Timestamp</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for log in logs %}
-
-<tr>
-
-<td>{{ log.id }}</td>
-
-<td>{{ log.session_id }}</td>
-
-<td>{{ log.event_type }}</td>
-
-<td>
-{% if log.image_path %}
-<img src="/{{ log.image_path }}" width="80">
-{% else %}
-No Image
-{% endif %}
-</td>
-
-<td>{{ log.timestamp }}</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}

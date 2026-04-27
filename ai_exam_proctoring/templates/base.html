@@ -1,48 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<title>{% block title %}AI Exam Proctoring System{% endblock %}</title>
-
-<link rel="stylesheet" href="/static/css/style.css">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ProctorAI — AI Exam Proctoring{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block head %}{% endblock %}
 </head>
-
 <body>
 
-
-<!-- Navigation Bar -->
-
 <nav class="navbar">
-
-<h2>AI Exam Proctoring</h2>
-
-<div class="nav-links">
-
-<a href="/exam">Exam</a>
-
-<a href="/admin/dashboard">Dashboard</a>
-
-<a href="/logout">Logout</a>
-
-</div>
-
+  <div class="container">
+    <a href="/" class="nav-brand">
+      <div class="brand-icon">🛡️</div>
+      <span>ProctorAI</span>
+    </a>
+    <div class="nav-links">
+      {% if current_user.is_authenticated %}
+        {% if current_user.role == 'admin' %}
+          <a href="/admin/dashboard" class="{% if request.path == '/admin/dashboard' %}active{% endif %}">📊 Dashboard</a>
+        {% endif %}
+        <a href="/exam" class="{% if request.path == '/exam' %}active{% endif %}">📝 Exam</a>
+        <div class="nav-user">
+          <div class="avatar">{{ current_user.username[0].upper() }}</div>
+          <span>{{ current_user.username }}</span>
+        </div>
+        <a href="/logout" class="btn btn-ghost btn-sm">Sign Out</a>
+      {% else %}
+        <a href="/#features">Features</a>
+        <a href="/#how-it-works">How It Works</a>
+        <a href="/login" class="btn-nav">Sign In</a>
+      {% endif %}
+    </div>
+  </div>
 </nav>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="container">
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message {{ category }}">
+          {% if category == 'success' %}✅{% elif category == 'danger' %}❌{% elif category == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+{% endwith %}
 
+{% block content %}{% endblock %}
 
-<!-- Page Content -->
-<div class="main-container">
-
-{% block content %}
-
+{% block footer %}
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>🛡️ ProctorAI</h3>
+        <p>AI-powered exam proctoring that ensures academic integrity using real-time facial detection, eye tracking, and behavioural analysis.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#how-it-works">How It Works</a></li>
+          <li><a href="/login">Student Login</a></li>
+          <li><a href="/admin/dashboard">Admin Panel</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Technology</h4>
+        <ul>
+          <li><a href="#">Face Detection</a></li>
+          <li><a href="#">Eye Tracking</a></li>
+          <li><a href="#">Head Pose Analysis</a></li>
+          <li><a href="#">Object Detection</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2025 ProctorAI. Built with Flask &amp; MediaPipe AI.
+    </div>
+  </div>
+</footer>
 {% endblock %}
-
-</div>
-
 
 </body>
 </html>
