@@ -13,6 +13,9 @@ Responsibilities:
 """
 
 # Import Flask framework
+from routes.monitor_routes import monitor_bp
+from routes.auth_routes import login_manager
+
 from flask import Flask
 
 # Import database object
@@ -41,6 +44,7 @@ def create_app():
     """
 
     # Create Flask application object
+   
     app = Flask(__name__)
 
     # Load configuration from config.py
@@ -48,10 +52,12 @@ def create_app():
 
     # Initialize database with the Flask app
     db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = "auth.login"
 
     # Register all route blueprints
     # Each blueprint represents a module of functionality
-
+    app.register_blueprint(monitor_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(exam_bp)
     app.register_blueprint(detection_bp)

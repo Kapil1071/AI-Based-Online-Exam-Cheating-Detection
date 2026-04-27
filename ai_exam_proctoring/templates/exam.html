@@ -3,110 +3,163 @@
 
 <head>
 <meta charset="UTF-8">
-
 <title>Online Exam</title>
 
 <link rel="stylesheet" href="/static/css/style.css">
 
 </head>
 
-
 <body>
 
-<h1>Online Examination</h1>
+<div class="main-container">
 
-<p>Do not switch tabs or leave the exam window.</p>
+    <header>
+        <h1>Online Examination</h1>
+        <p>Do not switch tabs or leave the exam window.</p>
+    </header>
+
+    <input type="hidden" id="session_id" value="{{ session_id }}">
+
+    <div class="layout">
+
+        <!-- LEFT PANEL -->
+        <div class="exam-panel">
+
+            <h2>Answer Area</h2>
+
+            <textarea id="answer_box" placeholder="Write your answer here..."></textarea>
+
+        </div>
 
 
-<!-- Hidden session id passed from Flask -->
-<input type="hidden" id="session_id" value="{{ session_id }}">
+        <!-- RIGHT PANEL -->
+        <div class="monitor-panel">
 
+            <h2>Live Monitoring</h2>
 
-<!-- Exam Area -->
-<div class="exam-container">
+           <img src="/video_feed?session_id={{ session_id }}" class="video-feed">
 
-<textarea id="answer_box" placeholder="Write your answer here..."></textarea>
+            <p id="status">Status: Monitoring</p>
+
+        </div>
+
+    </div>
 
 </div>
 
 
+<!-- ===============================
+     JAVASCRIPT
+================================ -->
 <script>
 
-/*
-This script monitors suspicious activities during the exam.
-
-Events detected:
-1. Tab switching
-2. Window minimize / focus loss
-*/
+// Get session id safely
+const sessionInput = document.getElementById("session_id")
+const sessionId = sessionInput ? sessionInput.value : null
 
 
-// Get session id from hidden input
-const sessionId = document.getElementById("session_id").value;
+/* ===============================
+   SHOW WARNING (TOAST)
+================================ */
+function showWarning(message){
+
+    const box = document.createElement("div")
+    box.className = "toast"
+    box.innerText = message
+
+    document.body.appendChild(box)
+
+    setTimeout(() => box.remove(), 3000)
+}
 
 
+/* ===============================
+   UPDATE STATUS TEXT
+================================ */
+function updateStatus(text, color="green"){
+    const status = document.getElementById("status")
+    status.innerText = "Status: " + text
+    status.style.color = color
+}
 
-/*
-Function to send cheating events to backend
-*/
+
+/* ===============================
+   SEND EVENT TO BACKEND
+================================ */
 function logEvent(eventType){
 
+    if(!sessionId) return
+
     fetch("/log_event", {
-
         method: "POST",
-
         headers: {
             "Content-Type": "application/json"
         },
-
         body: JSON.stringify({
             session_id: sessionId,
             event_type: eventType
         })
+    })
+    .then(res => res.json())
+    .then(data => {
 
-    });
+        console.log("Server:", data)
 
+        // Show warning
+        if(data.message){
+            showWarning(data.message)
+        }
+
+        // Update status UI
+        if(data.warnings){
+            updateStatus(`Warnings: ${data.warnings}`, "orange")
+        }
+
+        // 🚨 TERMINATION HANDLING (UPDATED)
+        if(data.terminated){
+
+            updateStatus("Exam Terminated", "red")
+
+            showWarning("Exam terminated due to cheating")
+
+            setTimeout(() => {
+                window.location.href = "/logout"
+            }, 2000)
+        }
+
+    })
+    .catch(err => console.error("Error:", err))
 }
 
 
-
-/*
-TAB SWITCH DETECTION
-This triggers when the student switches browser tabs.
-*/
-
+/* ===============================
+   TAB SWITCH DETECTION
+================================ */
 document.addEventListener("visibilitychange", function(){
 
     if(document.hidden){
-
-        alert("Tab switching detected!");
-
-        logEvent("Tab Switch");
-
+        logEvent("Tab Switch")
     }
 
 });
 
 
-
-/*
-WINDOW BLUR DETECTION
-Triggers when the exam window loses focus.
-Examples:
-- minimizing browser
-- switching application
-*/
-
-window.onblur = function(){
-
-    logEvent("Window Focus Lost");
-
-};
+/* ===============================
+   WINDOW BLUR DETECTION
+================================ */
+window.addEventListener("blur", function(){
+    logEvent("Window Focus Lost")
+});
 
 
+/* ===============================
+   PAGE LOAD INIT
+================================ */
+window.onload = function(){
+    updateStatus("Monitoring Active", "green")
+}
 
 </script>
-
 
 </body>
 </html>

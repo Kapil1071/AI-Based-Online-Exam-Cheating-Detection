@@ -1,23 +1,24 @@
 """
-System Constants
-----------------
+System Constants (Enhanced Version)
+----------------------------------
 
-This file stores global constants used throughout
-the AI Exam Proctoring System.
+Central configuration for:
+- Detection thresholds
+- Video settings
+- Object detection
+- Cheating scoring system
 
-Keeping constants centralized makes the system
-easier to maintain and modify.
+Designed for scalability and easy tuning.
 """
 
-
 # ===============================
-# CHEATING THRESHOLDS
+# CHEATING BEHAVIOR LIMITS
 # ===============================
 
-# Maximum allowed tab switches before flagging cheating
+# Maximum allowed tab switches before warning/termination
 MAX_TAB_SWITCHES = 3
 
-# Maximum seconds a student can look away from screen
+# Maximum allowed seconds looking away
 MAX_LOOK_AWAY_TIME = 5
 
 
@@ -25,10 +26,10 @@ MAX_LOOK_AWAY_TIME = 5
 # AI DETECTION PARAMETERS
 # ===============================
 
-# Head pose threshold for detecting looking left/right
+# Head pose threshold (pixels)
 HEAD_POSE_THRESHOLD = 40
 
-# Eye gaze threshold for determining screen focus
+# Eye gaze threshold (pixels)
 EYE_GAZE_THRESHOLD = 100
 
 
@@ -36,41 +37,76 @@ EYE_GAZE_THRESHOLD = 100
 # VIDEO SETTINGS
 # ===============================
 
-# Default webcam device index
 CAMERA_INDEX = 0
-
-# Video resolution
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
+
+# FPS control (used in video_stream)
+TARGET_FPS = 30
 
 
 # ===============================
 # OBJECT DETECTION
 # ===============================
 
-# Suspicious objects detected by YOLO
+# Objects considered suspicious (excluding "person" logic handled separately)
 CHEATING_OBJECTS = [
     "cell phone",
     "book",
-    "laptop",
-    "person"
+    "laptop"
 ]
+
+# Minimum number of persons to trigger cheating
+MULTIPLE_PERSON_THRESHOLD = 2
 
 
 # ===============================
 # CHEATING SCORE SYSTEM
 # ===============================
 
-# Points assigned for each violation
+# Score assigned per event
 CHEATING_SCORES = {
+
+    # Frontend behavior
     "Tab Switch": 2,
     "Window Focus Lost": 2,
+
+    # Face + attention
     "Looking Left": 3,
     "Looking Right": 3,
+    "Looking Down": 4,
+
+    # Face detection issues
     "No Face Detected": 5,
     "Multiple Faces Detected": 6,
-    "cell phone detected": 10
+
+    # Object detection
+    "cell phone detected": 10,
+    "book detected": 5,
+    "laptop detected": 5,
 }
 
-# Score threshold after which cheating is flagged
-CHEATING_SCORE_THRESHOLD = 10
+# Termination threshold
+CHEATING_SCORE_THRESHOLD = 12
+
+
+# ===============================
+# UI / SYSTEM FLAGS
+# ===============================
+
+# Enable/disable logging (useful for debugging)
+ENABLE_LOGGING = True
+
+# Enable/disable AI detection (for testing UI only)
+ENABLE_AI_DETECTION = True
+
+
+# ===============================
+# MESSAGE CONSTANTS
+# ===============================
+
+MESSAGES = {
+    "NORMAL": "Monitoring Active",
+    "WARNING": "Suspicious Activity Detected",
+    "TERMINATED": "Exam Terminated Due to Cheating"
+}

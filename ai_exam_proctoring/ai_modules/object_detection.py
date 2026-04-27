@@ -1,99 +1,95 @@
 """
-Object Detection Module
------------------------
+Object Detection Module (Enhanced Version)
+------------------------------------------
 
-This module detects cheating-related objects using YOLOv8.
+Uses YOLOv8 to detect suspicious objects and multiple persons.
 
-Objects of interest:
-- Mobile phone
-- Book
-- Laptop
-- Multiple persons
-
-If these objects are detected during an exam,
-the system may flag cheating behavior.
+Improvements:
+- Confidence filtering
+- Uses centralized constants
+- Efficient detection (single pass)
+- Clean structured output
 """
 
 from ultralytics import YOLO
 import cv2
 
+from utils.constants import CHEATING_OBJECTS, MULTIPLE_PERSON_THRESHOLD
 
-# Load YOLOv8 model
-# The lightweight 'yolov8n' model is used for faster inference
+# Load YOLO model once
 model = YOLO("models/yolov8n.pt")
 
-
-# Objects that may indicate cheating
-CHEATING_OBJECTS = [
-    "cell phone",
-    "book",
-    "laptop",
-    "person"
-]
+# Minimum confidence to consider detection valid
+CONF_THRESHOLD = 0.5
 
 
 def detect_objects(frame):
     """
     Detect objects in a frame using YOLOv8.
 
-    Parameters:
-    frame : numpy array
-        Image frame from webcam
-
     Returns:
-    detected_objects : list
-        List of detected object labels
+    list of (label, confidence)
     """
 
     results = model(frame)
 
     detected_objects = []
 
-    # Extract detection results
     for r in results:
-
         for box in r.boxes:
 
-            class_id = int(box.cls[0])
+            conf = float(box.conf[0])
 
+            # ✅ Ignore low-confidence detections
+            if conf < CONF_THRESHOLD:
+                continue
+
+            class_id = int(box.cls[0])
             label = model.names[class_id]
 
-            detected_objects.append(label)
+            detected_objects.append((label, conf))
 
     return detected_objects
 
 
 def analyze_objects(frame):
     """
-    Analyze detected objects to determine cheating behavior.
+    Analyze detected objects and determine cheating.
     """
 
-    objects = detect_objects(frame)
+    detections = detect_objects(frame)
 
-    cheating_detected = False
+    labels = [obj[0] for obj in detections]
 
-    for obj in objects:
+    person_count = labels.count("person")
 
-        if obj in CHEATING_OBJECTS:
+    # 🚨 Rule 1: Multiple persons
+    if person_count >= MULTIPLE_PERSON_THRESHOLD:
+        return {
+            "status": f"Multiple persons detected ({person_count})",
+            "cheating": True,
+            "type": "MULTI_PERSON"
+        }
 
-            cheating_detected = True
-
+    # 🚨 Rule 2: Suspicious objects
+    for label, conf in detections:
+        if label in CHEATING_OBJECTS:
             return {
-                "status": f"{obj} detected",
-                "cheating": True
+                "status": f"{label} detected ({conf:.2f})",
+                "cheating": True,
+                "type": "OBJECT"
             }
 
     return {
-        "status": "No suspicious objects",
-        "cheating": False
+        "status": "Normal",
+        "cheating": False,
+        "type": "NONE"
     }
 
 
 def draw_object_boxes(frame):
     """
-    Draw bounding boxes around detected objects.
-
-    Useful for debugging or monitoring.
+    Draw bounding boxes on frame.
     """
 
     results = model(frame)
