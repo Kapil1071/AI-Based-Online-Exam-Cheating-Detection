@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Scores — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="dashboard-header">
+      <div>
+        <h1>📊 Exam Scores</h1>
+        <p>All submitted exam results.</p>
+      </div>
+      <a href="/admin/dashboard" class="btn btn-ghost btn-sm">← Dashboard</a>
+    </div>
+
+    {% if results %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Exam</th>
+            <th>Score</th>
+            <th>Total</th>
+            <th>%</th>
+            <th>Status</th>
+            <th>Submitted</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for row in results %}
+        {% set pct = ((row.score / row.total_points * 100) | round(1)) if row.total_points > 0 else 0 %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td class="cell-primary">{{ row.username }}</td>
+          <td>{{ row.title }}</td>
+          <td><strong>{{ row.score }}</strong></td>
+          <td>{{ row.total_points }}</td>
+          <td>
+            <span class="badge {% if pct >= 60 %}badge-success{% elif pct >= 40 %}badge-warning{% else %}badge-danger{% endif %}">
+              {{ pct }}%
+            </span>
+          </td>
+          <td>
+            {% if row.status == 'terminated' %}
+              <span class="badge badge-danger">Terminated</span>
+            {% else %}
+              <span class="badge badge-success">Completed</span>
+            {% endif %}
+          </td>
+          <td>{{ row.submitted_at.strftime('%d %b %Y, %H:%M') if row.submitted_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="empty-icon">📊</div><p>No results yet.</p></div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

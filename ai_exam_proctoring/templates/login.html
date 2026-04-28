@@ -8,6 +8,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .role-tabs { display:flex; gap:8px; margin-bottom:24px; }
+    .role-tab {
+      flex:1; padding:10px 0; text-align:center; border:2px solid var(--border);
+      border-radius:var(--radius-sm); cursor:pointer; font-weight:600;
+      color:var(--text-secondary); background:var(--surface-alt); transition:.2s;
+    }
+    .role-tab.active { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+    .role-tab:hover:not(.active) { border-color:var(--border-strong); }
+  </style>
 </head>
 <body>
 
@@ -46,7 +56,7 @@
     <div class="auth-form-box">
       <div class="auth-form-header">
         <h1>Welcome back</h1>
-        <p>Enter your credentials to start your proctored exam session.</p>
+        <p>Select your role and enter your credentials.</p>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -60,7 +70,14 @@
         {% endif %}
       {% endwith %}
 
+      <!-- Role Tabs -->
+      <div class="role-tabs">
+        <div class="role-tab active" id="tab-student" onclick="selectRole('student')">🎓 Student</div>
+        <div class="role-tab" id="tab-staff" onclick="selectRole('staff')">👨‍🏫 Staff / Admin</div>
+      </div>
+
       <form method="POST" action="/login">
+        <input type="hidden" id="role-input" name="role" value="student">
         <div class="form-group">
           <label class="form-label" for="username">Username</label>
           <div class="form-input-icon">
@@ -83,12 +100,21 @@
       <div class="demo-accounts">
         <p>Test Credentials</p>
         <div class="demo-row"><span>Admin</span><strong>admin / admin123</strong></div>
+        <div class="demo-row"><span>Staff</span><strong>staff / staff123</strong></div>
         <div class="demo-row"><span>Student</span><strong>student / student123</strong></div>
       </div>
     </div>
   </div>
 
 </div>
+
+<script>
+function selectRole(role) {
+  document.getElementById("role-input").value = role;
+  document.getElementById("tab-student").classList.toggle("active", role === "student");
+  document.getElementById("tab-staff").classList.toggle("active", role === "staff");
+}
+</script>
 
 </body>
 </html>

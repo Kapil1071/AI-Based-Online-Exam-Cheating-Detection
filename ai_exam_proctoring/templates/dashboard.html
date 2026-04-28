@@ -12,7 +12,7 @@
           <h1>Admin Dashboard</h1>
           <p>Live overview of exam sessions and cheating events.</p>
         </div>
-        <a href="/exam" class="btn btn-primary">+ New Session</a>
+        <a href="/admin/scores" class="btn btn-primary">📊 View Scores</a>
       </div>
     </div>
 
@@ -47,6 +47,45 @@
       </div>
     </div>
 
+    <!-- Exams -->
+    <div class="section-label">Scheduled Exams</div>
+    <div class="table-wrapper" style="margin-bottom:32px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Scheduled At</th>
+            <th>Duration</th>
+            <th>Max Warnings</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for exam in exams %}
+          <tr>
+            <td class="cell-primary">{{ loop.index }}</td>
+            <td>{{ exam.title }}</td>
+            <td>{{ exam.scheduled_at.strftime('%d %b %Y, %H:%M') if exam.scheduled_at else '—' }}</td>
+            <td>{{ exam.duration_minutes }} min</td>
+            <td>{{ exam.max_warnings }}</td>
+            <td>
+              {% if exam.status == 'upcoming' %}<span class="badge badge-warning">Upcoming</span>
+              {% elif exam.status == 'active' %}<span class="badge badge-success">Active</span>
+              {% else %}<span class="badge badge-neutral">Finished</span>{% endif %}
+            </td>
+            <td>
+              <a href="/admin/exams/{{ exam.id }}/schedule" class="btn btn-ghost btn-sm">Schedule</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><p>No exams yet.</p></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
     <div class="section-label">Exam Sessions</div>
     <div class="table-wrapper" style="margin-bottom:32px;">
       <table>
@@ -55,8 +94,10 @@
             <th>#</th>
             <th>Session ID</th>
             <th>User ID</th>
+            <th>Exam</th>
             <th>Start Time</th>
             <th>End Time</th>
+            <th>Warnings</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -66,10 +107,14 @@
             <td class="cell-primary">{{ loop.index }}</td>
             <td><span class="badge badge-neutral">#{{ session.id }}</span></td>
             <td>{{ session.user_id }}</td>
+            <td>{{ session.exam.title if session.exam else '—' }}</td>
             <td>{{ session.start_time.strftime('%d %b %Y, %H:%M') if session.start_time else '—' }}</td>
             <td>{{ session.end_time.strftime('%d %b %Y, %H:%M') if session.end_time else '—' }}</td>
+            <td>{{ session.warning_count }}</td>
             <td>
-              {% if session.end_time %}
+              {% if session.terminated %}
+                <span class="badge badge-danger">Terminated</span>
+              {% elif session.end_time %}
                 <span class="badge badge-neutral">Completed</span>
               {% else %}
                 <span class="badge badge-success">Active</span>
@@ -78,7 +123,7 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="6">
+            <td colspan="8">
               <div class="empty-state">
                 <div class="empty-icon">📋</div>
                 <p>No exam sessions yet.</p>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{% if exam %}Edit Exam{% else %}New Exam{% endif %} — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container" style="max-width:640px">
+
+    <div class="dashboard-header" style="margin-bottom:24px">
+      <div>
+        <h1>{% if exam %}✏️ Edit Exam{% else %}➕ New Exam{% endif %}</h1>
+        <p>{% if exam %}Update exam settings.{% else %}Create a new exam for students.{% endif %}</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding:32px;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md)">
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label">Exam Title *</label>
+          <input class="form-input" type="text" name="title" value="{{ exam.title if exam else '' }}" required placeholder="e.g. AI Fundamentals">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="answer-textarea" name="description" rows="3" placeholder="Optional exam description">{{ exam.description if exam else '' }}</textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-group">
+            <label class="form-label">Duration (minutes)</label>
+            <input class="form-input" type="number" name="duration_minutes" min="5" max="300"
+                   value="{{ exam.duration_minutes if exam else 60 }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Warnings</label>
+            <input class="form-input" type="number" name="max_warnings" min="1" max="20"
+                   value="{{ exam.max_warnings if exam else 3 }}" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Scheduled Start (leave blank for immediate)</label>
+          <input class="form-input" type="datetime-local" name="scheduled_at"
+                 value="{{ exam.scheduled_at.strftime('%Y-%m-%dT%H:%M') if exam and exam.scheduled_at else '' }}">
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <button type="submit" class="btn btn-primary">{% if exam %}Save Changes{% else %}Create Exam{% endif %}</button>
+          <a href="/staff/dashboard" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

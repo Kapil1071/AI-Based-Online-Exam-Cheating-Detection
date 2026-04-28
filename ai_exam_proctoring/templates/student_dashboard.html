@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}My Exams — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="dashboard-header">
+      <div class="dashboard-title">
+        <div>
+          <h1>🎓 My Exams</h1>
+          <p>View and take your scheduled exams.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm tab-btn active" onclick="showTab('upcoming',this)">📅 Upcoming ({{ upcoming|length }})</button>
+      <button class="btn btn-ghost btn-sm tab-btn" onclick="showTab('active',this)">🟢 Active ({{ active|length }})</button>
+      <button class="btn btn-ghost btn-sm tab-btn" onclick="showTab('finished',this)">✅ Finished ({{ finished|length }})</button>
+      <button class="btn btn-ghost btn-sm tab-btn" onclick="showTab('absent',this)">❌ Absent ({{ absent|length }})</button>
+    </div>
+
+    <!-- Upcoming -->
+    <div id="tab-upcoming" class="tab-content">
+      {% if upcoming %}
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Exam</th><th>Scheduled At</th><th>Duration</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for item in upcoming %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="cell-primary">{{ item.exam.title }}</td>
+            <td>{{ item.exam.scheduled_at.strftime('%d %b %Y, %H:%M') if item.exam.scheduled_at else '—' }}</td>
+            <td>{{ item.exam.duration_minutes }} min</td>
+            <td><span class="badge badge-warning">Upcoming</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">📅</div><p>No upcoming exams.</p></div>
+      {% endif %}
+    </div>
+
+    <!-- Active -->
+    <div id="tab-active" class="tab-content" style="display:none">
+      {% if active %}
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Exam</th><th>Duration</th><th>Max Warnings</th><th>Action</th></tr></thead>
+          <tbody>
+          {% for item in active %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="cell-primary">{{ item.exam.title }}</td>
+            <td>{{ item.exam.duration_minutes }} min</td>
+            <td>{{ item.exam.max_warnings }}</td>
+            <td>
+              {% if item.session and item.session.result %}
+                <span class="badge badge-neutral">Already submitted</span>
+              {% elif item.session and item.session.terminated %}
+                <span class="badge badge-danger">Terminated</span>
+              {% else %}
+                <a href="/exam/{{ item.exam.id }}" class="btn btn-primary btn-sm">Start / Resume →</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">🟢</div><p>No active exams right now.</p></div>
+      {% endif %}
+    </div>
+
+    <!-- Finished -->
+    <div id="tab-finished" class="tab-content" style="display:none">
+      {% if finished %}
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Exam</th><th>Score</th><th>Total</th><th>Percentage</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for item in finished %}
+          {% set pct = ((item.result.score / item.result.total_points * 100) | round(1)) if item.result.total_points > 0 else 0 %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="cell-primary">{{ item.exam.title }}</td>
+            <td><strong>{{ item.result.score }}</strong></td>
+            <td>{{ item.result.total_points }}</td>
+            <td>
+              <span class="badge {% if pct >= 60 %}badge-success{% else %}badge-danger{% endif %}">{{ pct }}%</span>
+            </td>
+            <td>
+              {% if item.result.status == 'terminated' %}
+                <span class="badge badge-danger">Terminated</span>
+              {% else %}
+                <span class="badge badge-success">Completed</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">✅</div><p>No finished exams yet.</p></div>
+      {% endif %}
+    </div>
+
+    <!-- Absent -->
+    <div id="tab-absent" class="tab-content" style="display:none">
+      {% if absent %}
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>#</th><th>Exam</th><th>Scheduled At</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for item in absent %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="cell-primary">{{ item.exam.title }}</td>
+            <td>{{ item.exam.scheduled_at.strftime('%d %b %Y, %H:%M') if item.exam.scheduled_at else '—' }}</td>
+            <td><span class="badge badge-danger">Absent</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">❌</div><p>No absent exams.</p></div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none")
+  document.getElementById("tab-" + name).style.display = "block"
+  document.querySelectorAll(".tab-btn").forEach(b => { b.classList.remove("btn-primary"); b.classList.add("btn-ghost") })
+  btn.classList.remove("btn-ghost"); btn.classList.add("btn-primary")
+}
+// Show active tab if there are active exams
+window.addEventListener("DOMContentLoaded", function() {
+  {% if active %}
+  document.querySelector('[onclick*="active"]').click()
+  {% endif %}
+})
+</script>
+{% endblock %}

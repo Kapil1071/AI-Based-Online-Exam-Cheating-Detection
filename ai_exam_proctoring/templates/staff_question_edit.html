@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Question — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container" style="max-width:640px">
+
+    <div class="dashboard-header" style="margin-bottom:24px">
+      <div>
+        <h1>✏️ Edit Question</h1>
+        <p>Update question text, options, and scoring.</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding:32px;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md)">
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label">Question Text *</label>
+          <textarea class="answer-textarea" name="text" rows="3" required>{{ question.text }}</textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Option A</label>
+            <input class="form-input" type="text" name="option_a" value="{{ question.option_a or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Option B</label>
+            <input class="form-input" type="text" name="option_b" value="{{ question.option_b or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Option C</label>
+            <input class="form-input" type="text" name="option_c" value="{{ question.option_c or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Option D</label>
+            <input class="form-input" type="text" name="option_d" value="{{ question.option_d or '' }}">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Correct Answer (A/B/C/D)</label>
+            <input class="form-input" type="text" name="correct_answer" maxlength="1" value="{{ question.correct_answer or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Points</label>
+            <input class="form-input" type="number" name="points" min="1" value="{{ question.points }}">
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <a href="/staff/exams/{{ question.exam_id }}/questions" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

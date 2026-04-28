@@ -1603,3 +1603,52 @@ table td img {
   .stats-row  { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: 1fr; }
 }
+
+/* ── MCQ Options ─────────────────────────────────────────────────────── */
+.mcq-options { display:flex; flex-direction:column; gap:10px; margin:12px 0 20px; }
+.mcq-option {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 18px;
+  border:2px solid var(--border);
+  border-radius:var(--radius-md);
+  cursor:pointer;
+  transition:border-color .15s, background .15s;
+  user-select:none;
+}
+.mcq-option:hover { border-color:var(--primary); background:var(--primary-light); }
+.mcq-option.selected { border-color:var(--primary); background:var(--primary-light); }
+.mcq-letter {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:32px; height:32px; border-radius:50%;
+  background:var(--border); font-weight:700; font-size:.9rem; flex-shrink:0;
+}
+.mcq-option.selected .mcq-letter { background:var(--primary); color:#fff; }
+.mcq-text { font-size:.95rem; color:var(--text-primary); }
+
+/* ── btn-success ─────────────────────────────────────────────────────── */
+.btn-success {
+  background:var(--success); color:#fff; border:none; padding:8px 18px;
+  border-radius:var(--radius-sm); font-weight:600; cursor:pointer; transition:.2s;
+}
+.btn-success:hover { background:#15803d; }
+
+/* ── form-input (shared with staff forms) ────────────────────────────── */
+.form-input, .answer-textarea {
+  width:100%; padding:10px 14px; border:1.5px solid var(--border);
+  border-radius:var(--radius-sm); font-family:var(--font); font-size:.95rem;
+  color:var(--text-primary); background:var(--surface-alt);
+  transition:border-color .15s;
+}
+.form-input:focus, .answer-textarea:focus {
+  outline:none; border-color:var(--primary); background:var(--surface);
+}
+.answer-textarea { resize:vertical; min-height:100px; }
+.form-group { margin-bottom:16px; }
+.form-label { display:block; margin-bottom:6px; font-weight:600; font-size:.875rem; color:var(--text-primary); }
+
+/* ── Page wrapper ────────────────────────────────────────────────────── */
+.page-wrapper { padding:40px 0 80px; }
+
+/* ── Dashboard header ────────────────────────────────────────────────── */
+.dashboard-header { margin-bottom:32px; }
+.dashboard-title { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; }

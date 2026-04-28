@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Questions — {{ exam.title }} — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="dashboard-header">
+      <div>
+        <h1>📝 Questions: {{ exam.title }}</h1>
+        <p>{{ questions|length }} question(s) · {{ exam.total_points }} total points</p>
+      </div>
+      <a href="/staff/dashboard" class="btn btn-ghost btn-sm">← Back</a>
+    </div>
+
+    <!-- Add Question Form -->
+    <div class="card" style="padding:24px;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);margin-bottom:32px">
+      <h3 style="margin-bottom:16px">➕ Add Question</h3>
+      <form method="POST" action="/staff/exams/{{ exam.id }}/questions/add">
+        <div class="form-group">
+          <label class="form-label">Question Text *</label>
+          <textarea class="answer-textarea" name="text" rows="2" required placeholder="Enter the question"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Option A</label>
+            <input class="form-input" type="text" name="option_a" placeholder="Option A (leave blank for open-ended)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Option B</label>
+            <input class="form-input" type="text" name="option_b" placeholder="Option B">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Option C</label>
+            <input class="form-input" type="text" name="option_c" placeholder="Option C">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Option D</label>
+            <input class="form-input" type="text" name="option_d" placeholder="Option D">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Correct Answer (A/B/C/D)</label>
+            <input class="form-input" type="text" name="correct_answer" maxlength="1" placeholder="e.g. B">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Points</label>
+            <input class="form-input" type="number" name="points" min="1" value="10">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Add Question</button>
+      </form>
+    </div>
+
+    <!-- Questions List -->
+    {% if questions %}
+    <div class="section-label">Existing Questions</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Question</th><th>Type</th><th>Correct</th><th>Points</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        {% for q in questions %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td style="max-width:300px">{{ q.text }}</td>
+          <td>{% if q.is_mcq %}<span class="badge badge-neutral">MCQ</span>{% else %}<span class="badge badge-warning">Open</span>{% endif %}</td>
+          <td>{{ q.correct_answer or '—' }}</td>
+          <td>{{ q.points }}</td>
+          <td>
+            <a href="/staff/questions/{{ q.id }}/edit" class="btn btn-ghost btn-sm">Edit</a>
+            <form action="/staff/questions/{{ q.id }}/delete" method="POST" style="display:inline"
+                  onsubmit="return confirm('Delete this question?')">
+              <button class="btn btn-ghost btn-sm" style="color:var(--danger)">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="empty-icon">❓</div><p>No questions yet. Add some above.</p></div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

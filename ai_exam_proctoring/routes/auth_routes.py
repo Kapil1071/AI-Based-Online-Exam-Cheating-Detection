@@ -4,7 +4,7 @@ Authentication Routes
 
 This module handles:
 
-1. User login
+1. User login  (Student / Staff / Admin)
 2. User logout
 3. Session management
 
@@ -26,9 +26,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 
 
 # Create Blueprint
-# Blueprints allow modular route organization
 auth_bp = Blueprint("auth", __name__)
-
 
 # Initialize Login Manager
 login_manager = LoginManager()
@@ -36,62 +34,60 @@ login_manager = LoginManager()
 
 @login_manager.user_loader
 def load_user(user_id):
-    """
-    Flask-Login uses this function to load the user object
-    from the database using the stored session ID.
-    """
-
     return User.query.get(int(user_id))
 
 
-# Login Page Route
+def _redirect_after_login(user):
+    """Return the appropriate redirect response based on user role."""
+    if user.role == "admin":
+        return redirect(url_for("admin.admin_dashboard"))
+    elif user.role == "staff":
+        return redirect(url_for("staff.staff_dashboard"))
+    else:
+        return redirect(url_for("student.student_dashboard"))
+
+
+# ── Login ──────────────────────────────────────────────────────────────────
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     """
-    Handles user login.
-
-    GET  → show login page
-    POST → authenticate user
+    GET  → show login page with Student / Staff role tabs
+    POST → authenticate user and redirect by role
     """
 
-    # If user already logged in redirect to exam page
     if current_user.is_authenticated:
-        return redirect(url_for("exam.start_exam"))
+        return _redirect_after_login(current_user)
 
-    # Handle login form submission
     if request.method == "POST":
-
         username = request.form.get("username")
         password = request.form.get("password")
+        role_hint = request.form.get("role", "student")  # 'student' or 'staff'
 
-        # Find user in database
         user = User.query.filter_by(username=username).first()
 
         if user and check_password_hash(user.password, password):
-
-            # Log the user in
-            login_user(user)
-
-            flash("Login successful", "success")
-
-            return redirect(url_for("exam.start_exam"))
-
+            # Staff tab should only allow staff/admin accounts
+            if role_hint == "staff" and user.role not in ("staff", "admin"):
+                flash("This account does not have staff access.", "danger")
+            elif role_hint == "student" and user.role not in ("student",):
+                # Admin/staff trying student portal → allow but redirect correctly
+                login_user(user)
+                flash("Login successful", "success")
+                return _redirect_after_login(user)
+            else:
+                login_user(user)
+                flash("Login successful", "success")
+                return _redirect_after_login(user)
         else:
             flash("Invalid username or password", "danger")
 
     return render_template("login.html")
 
 
-# Logout Route
+# ── Logout ─────────────────────────────────────────────────────────────────
 @auth_bp.route("/logout")
 @login_required
 def logout():
-    """
-    Logs the user out and clears session.
-    """
-
     logout_user()
-
     flash("You have been logged out", "info")
-
     return redirect(url_for("auth.login"))

@@ -11,6 +11,8 @@ from routes.auth_routes import auth_bp
 from routes.exam_routes import exam_bp
 from routes.detection_routes import detection_bp
 from routes.admin_routes import admin_bp
+from routes.staff_routes import staff_bp
+from routes.student_routes import student_bp
 
 
 def create_app():
@@ -27,6 +29,8 @@ def create_app():
     app.register_blueprint(exam_bp)
     app.register_blueprint(detection_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(staff_bp)
+    app.register_blueprint(student_bp)
 
     return app
 

@@ -22,11 +22,16 @@
       {% if current_user.is_authenticated %}
         {% if current_user.role == 'admin' %}
           <a href="/admin/dashboard" class="{% if request.path == '/admin/dashboard' %}active{% endif %}">📊 Dashboard</a>
+          <a href="/admin/scores" class="{% if request.path == '/admin/scores' %}active{% endif %}">📈 Scores</a>
+        {% elif current_user.role == 'staff' %}
+          <a href="/staff/dashboard" class="{% if '/staff' in request.path %}active{% endif %}">📋 Staff Panel</a>
+        {% else %}
+          <a href="/student/dashboard" class="{% if request.path == '/student/dashboard' %}active{% endif %}">🎓 My Exams</a>
         {% endif %}
-        <a href="/exam" class="{% if request.path == '/exam' %}active{% endif %}">📝 Exam</a>
         <div class="nav-user">
           <div class="avatar">{{ current_user.username[0].upper() }}</div>
           <span>{{ current_user.username }}</span>
+          <span class="badge badge-neutral" style="font-size:.7rem;padding:2px 8px">{{ current_user.role }}</span>
         </div>
         <a href="/logout" class="btn btn-ghost btn-sm">Sign Out</a>
       {% else %}

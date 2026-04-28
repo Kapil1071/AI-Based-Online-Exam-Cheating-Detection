@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Exam — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container" style="max-width:540px">
+
+    <div class="dashboard-header" style="margin-bottom:24px">
+      <div>
+        <h1>📅 Schedule Exam</h1>
+        <p>Set the start time, duration, and warning limit for <strong>{{ exam.title }}</strong>.</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding:32px;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md)">
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label">Scheduled Start (leave blank for immediate)</label>
+          <input class="form-input" type="datetime-local" name="scheduled_at"
+                 value="{{ exam.scheduled_at.strftime('%Y-%m-%dT%H:%M') if exam.scheduled_at else '' }}">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-group">
+            <label class="form-label">Duration (minutes)</label>
+            <input class="form-input" type="number" name="duration_minutes" min="5" value="{{ exam.duration_minutes }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Warnings</label>
+            <input class="form-input" type="number" name="max_warnings" min="1" value="{{ exam.max_warnings }}" required>
+            <small style="color:var(--text-muted)">Exam terminates when exceeded.</small>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <button type="submit" class="btn btn-primary">Save Schedule</button>
+          <a href="/admin/dashboard" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

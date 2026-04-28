@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard — ProctorAI{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="dashboard-header">
+      <div class="dashboard-title">
+        <div>
+          <h1>👨‍🏫 Staff Dashboard</h1>
+          <p>Manage exams and questions.</p>
+        </div>
+        <a href="/staff/exams/new" class="btn btn-primary">+ New Exam</a>
+      </div>
+    </div>
+
+    <div class="section-label">Exams</div>
+    {% if exams %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Scheduled At</th>
+            <th>Duration</th>
+            <th>Max Warnings</th>
+            <th>Status</th>
+            <th>Questions</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for exam in exams %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td class="cell-primary">{{ exam.title }}</td>
+          <td>{{ exam.scheduled_at.strftime('%d %b %Y, %H:%M') if exam.scheduled_at else '—' }}</td>
+          <td>{{ exam.duration_minutes }} min</td>
+          <td>{{ exam.max_warnings }}</td>
+          <td>
+            {% if exam.status == 'upcoming' %}<span class="badge badge-warning">Upcoming</span>
+            {% elif exam.status == 'active' %}<span class="badge badge-success">Active</span>
+            {% else %}<span class="badge badge-neutral">Finished</span>{% endif %}
+          </td>
+          <td>{{ exam.questions | length }}</td>
+          <td>
+            <a href="/staff/exams/{{ exam.id }}/questions" class="btn btn-ghost btn-sm">Questions</a>
+            <a href="/staff/exams/{{ exam.id }}/edit" class="btn btn-ghost btn-sm">Edit</a>
+            <form action="/staff/exams/{{ exam.id }}/delete" method="POST" style="display:inline"
+                  onsubmit="return confirm('Delete this exam?')">
+              <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>No exams yet. <a href="/staff/exams/new">Create one →</a></p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
