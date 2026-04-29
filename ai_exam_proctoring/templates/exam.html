@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Online Exam — ProctorAI{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block content %}
+
+<div class="exam-header">
+  <div class="container">
+    <div class="exam-header-inner">
+      <div class="exam-title">
+        <div>
+          <h1>📝 {{ exam.title }}</h1>
+          <p>Do not switch tabs or leave the exam window</p>
+        </div>
+      </div>
+      <div class="exam-meta">
+        <div class="exam-timer" id="exam-timer">⏱ {{ "%02d"|format(exam.duration_minutes) }}:00</div>
+        <div class="exam-session-badge">Session #{{ session_id }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="hidden" id="session_id" value="{{ session_id }}">
+<input type="hidden" id="max_warnings" value="{{ exam.max_warnings }}">
+<input type="hidden" id="exam_duration" value="{{ exam.duration_minutes }}">
+
+<div class="container">
+  <div class="exam-body">
+
+    <div class="question-panel">
+
+      {% if questions %}
+      {% for q in questions %}
+      <div class="question-card" id="qcard-{{ loop.index0 }}" {% if not loop.first %}style="display:none"{% endif %}>
+        <div class="question-meta">
+          <span class="question-num">Question {{ loop.index }} of {{ questions|length }}</span>
+          <span class="question-points">{{ q.points }} points</span>
+        </div>
+        <div class="question-text">{{ q.text }}</div>
+
+        {% if q.is_mcq %}
+        <div class="answer-label">Select your answer</div>
+        <div class="mcq-options" id="mcq-{{ q.id }}">
+          {% for letter, option in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d)] %}
+          {% if option %}
+          <label class="mcq-option {% if existing_answers.get(q.id) == letter %}selected{% endif %}"
+                 data-qid="{{ q.id }}" data-value="{{ letter }}"
+                 onclick="selectMCQ(this)">
+            <span class="mcq-letter">{{ letter }}</span>
+            <span class="mcq-text">{{ option }}</span>
+          </label>
+          {% endif %}
+          {% endfor %}
+        </div>
+        <input type="hidden" id="ans-{{ q.id }}" value="{{ existing_answers.get(q.id, '') }}">
+        {% else %}
+        <div class="answer-label">Your Answer</div>
+        <textarea id="ans-{{ q.id }}" class="answer-textarea"
+                  placeholder="Write your answer here..."
+                  onchange="saveAnswer({{ q.id }})">{{ existing_answers.get(q.id, '') }}</textarea>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <div class="question-nav">
+        <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="navigate(-1)" disabled>← Previous</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="q-badges">
+          {% for q in questions %}
+          <span class="badge badge-neutral q-badge" id="badge-{{ loop.index0 }}"
+                style="font-size:.8rem;padding:6px 14px;cursor:pointer"
+                onclick="goTo({{ loop.index0 }})">Q{{ loop.index }}</span>
+          {% endfor %}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" id="btn-next" onclick="navigate(1)">Next →</button>
+          <form action="/exam/submit/{{ session_id }}" method="POST" id="submit-form" style="display:inline">
+            <button type="submit" class="btn btn-success btn-sm" id="btn-submit" style="display:none">Submit ✓</button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div class="question-card">
+        <p style="color:var(--text-muted);text-align:center;padding:32px 0;">No questions available for this exam.</p>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <div class="monitor-sidebar">
+      <div class="camera-card">
+        <div class="camera-card-header">
+          <span class="title">📷 Live Monitor</span>
+          <span class="badge badge-success" id="cam-status-badge">LIVE</span>
+        </div>
+        <div class="camera-card-body">
+          <img src="/video_feed?session_id={{ session_id }}" class="video-feed" alt="Live feed">
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-title">Monitoring Status</div>
+        <div class="status-item">
+          <span class="key">🤖 AI Detection</span>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="status-item">
+          <span class="key">👁 Eye Tracking</span>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="status-item">
+          <span class="key">🖥 Tab Monitor</span>
+          <span class="badge badge-success">Active</span>
+        </div>
+        <div class="status-item">
+          <span class="key">📡 Connection</span>
+          <span class="badge badge-success" id="status">Online</span>
+        </div>
+      </div>
+
+      <div class="warning-bar">
+        <div class="title">
+          <span>Tab Switch Warnings</span>
+          <span id="warn-count">0 / {{ exam.max_warnings }}</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill w-0" id="warn-bar"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const sessionId = document.getElementById("session_id")?.value || null
+const maxWarnings = parseInt(document.getElementById("max_warnings")?.value || "3")
+const examDurationMinutes = parseInt(document.getElementById("exam_duration")?.value || "60")
+
+// ── Warning / monitoring ────────────────────────────────────────────────
+let warnCount = 0
+
+function showWarning(message) {
+  const box = document.createElement("div")
+  box.className = "toast"
+  box.innerHTML = "🚨 " + message
+  document.body.appendChild(box)
+  setTimeout(() => box.remove(), 4000)
+}
+
+function updateStatus(text, type) {
+  const el = document.getElementById("status")
+  el.textContent = text
+  el.className = "badge"
+  if (type === "danger")  el.classList.add("badge-danger")
+  else if (type === "warning") el.classList.add("badge-warning")
+  else el.classList.add("badge-success")
+}
+
+function updateWarnBar(count) {
+  warnCount = count
+  const bar = document.getElementById("warn-bar")
+  const label = document.getElementById("warn-count")
+  label.textContent = count + " / " + maxWarnings
+  bar.className = "progress-fill"
+  const pct = Math.min(count / maxWarnings, 1)
+  if (pct === 0) bar.classList.add("w-0")
+  else if (pct <= 0.34) bar.classList.add("w-33")
+  else if (pct <= 0.67) bar.classList.add("w-66")
+  else bar.classList.add("w-100")
+}
+
+function logEvent(eventType) {
+  if (!sessionId) return
+  fetch("/log_event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, event_type: eventType })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.warnings !== undefined) updateWarnBar(data.warnings)
+    if (data.message) showWarning(data.message)
+    if (data.terminated) {
+      updateStatus("Terminated", "danger")
+      showWarning("Exam terminated due to cheating")
+      setTimeout(() => { document.getElementById("submit-form").submit() }, 2500)
+    } else if (data.warnings > 0) {
+      updateStatus("Warning " + data.warnings, "warning")
+    }
+  })
+  .catch(err => console.error(err))
+}
+
+// ── Timer ────────────────────────────────────────────────────────────────
+let totalSeconds = examDurationMinutes * 60
+const timerEl = document.getElementById("exam-timer")
+
+function tick() {
+  if (totalSeconds <= 0) {
+    timerEl.textContent = "⏱ 00:00"
+    document.getElementById("submit-form").submit()
+    return
+  }
+  totalSeconds--
+  const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0")
+  const s = (totalSeconds % 60).toString().padStart(2, "0")
+  timerEl.textContent = "⏱ " + m + ":" + s
+  if (totalSeconds <= 300) timerEl.className = "exam-timer warning"
+  if (totalSeconds <= 60)  timerEl.className = "exam-timer danger"
+}
+
+setInterval(tick, 1000)
+
+// ── Question navigation ──────────────────────────────────────────────────
+const totalQuestions = document.querySelectorAll(".question-card").length
+let currentIndex = 0
+
+function goTo(index) {
+  if (index < 0 || index >= totalQuestions) return
+  // Save answer of current question before leaving
+  autoSaveCurrent()
+  document.getElementById("qcard-" + currentIndex).style.display = "none"
+  document.getElementById("badge-" + currentIndex).classList.remove("badge-success")
+  document.getElementById("badge-" + currentIndex).classList.add("badge-neutral")
+  currentIndex = index
+  document.getElementById("qcard-" + currentIndex).style.display = "block"
+  document.getElementById("badge-" + currentIndex).classList.remove("badge-neutral")
+  document.getElementById("badge-" + currentIndex).classList.add("badge-success")
+  document.getElementById("btn-prev").disabled = currentIndex === 0
+  document.getElementById("btn-next").style.display = currentIndex === totalQuestions - 1 ? "none" : ""
+  document.getElementById("btn-submit").style.display = currentIndex === totalQuestions - 1 ? "" : "none"
+}
+
+function navigate(dir) {
+  goTo(currentIndex + dir)
+}
+
+// initialise first badge
+if (totalQuestions > 0) {
+  document.getElementById("badge-0")?.classList.remove("badge-neutral")
+  document.getElementById("badge-0")?.classList.add("badge-success")
+  document.getElementById("btn-next").style.display = totalQuestions === 1 ? "none" : ""
+  document.getElementById("btn-submit").style.display = totalQuestions === 1 ? "" : "none"
+}
+
+// ── Answer saving ─────────────────────────────────────────────────────────
+function autoSaveCurrent() {
+  const card = document.getElementById("qcard-" + currentIndex)
+  if (!card) return
+  const textarea = card.querySelector("textarea")
+  if (textarea) {
+    const qid = textarea.id.replace("ans-", "")
+    saveAnswer(parseInt(qid))
+  }
+  // MCQ answers are saved on click, nothing extra needed
+}
+
+function saveAnswer(questionId) {
+  if (!sessionId) return
+  const el = document.getElementById("ans-" + questionId)
+  if (!el) return
+  const answerText = el.value
+  fetch("/exam/save_answer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: parseInt(sessionId), question_id: questionId, answer_text: answerText })
+  }).catch(err => console.error(err))
+}
+
+function selectMCQ(label) {
+  const qid = parseInt(label.dataset.qid)
+  const value = label.dataset.value
+  // deselect siblings
+  document.querySelectorAll("#mcq-" + qid + " .mcq-option").forEach(l => l.classList.remove("selected"))
+  label.classList.add("selected")
+  document.getElementById("ans-" + qid).value = value
+  saveAnswer(qid)
+}
+
+// ── Focus / visibility events ─────────────────────────────────────────────
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) logEvent("Tab Switch")
+})
+
+window.addEventListener("blur", function () {
+  logEvent("Window Focus Lost")
+})
+
+window.onload = function () {
+  updateStatus("Online", "success")
+}
+</script>
+
+{% endblock %}
